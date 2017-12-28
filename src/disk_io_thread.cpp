@@ -251,21 +251,15 @@ constexpr disk_job_flags_t disk_interface::cache_hit;
 		}
 	}
 
+#if TORRENT_USE_ASSERTS
 	disk_io_thread::~disk_io_thread()
 	{
 		DLOG("destructing disk_io_thread\n");
 
-#if TORRENT_USE_ASSERTS
-		// by now, all pieces should have been evicted
-		auto pieces = m_disk_cache.all_pieces();
-		TORRENT_ASSERT(pieces.first == pieces.second);
-#endif
-
 		TORRENT_ASSERT(m_magic == 0x1337);
-#if TORRENT_USE_ASSERTS
 		m_magic = 0xdead;
-#endif
 	}
+#endif
 
 	void disk_io_thread::abort(bool const wait)
 	{

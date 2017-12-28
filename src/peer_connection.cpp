@@ -153,6 +153,8 @@ namespace libtorrent {
 		else if (m_connecting)
 			m_counters.inc_stats_counter(counters::num_peers_half_open);
 
+		if (m_connecting && t) t->inc_num_connecting(m_peer_info);
+
 		// if t is nullptr, we better not be connecting, since
 		// we can't decrement the connecting counter
 		TORRENT_ASSERT(t || !m_connecting);
@@ -370,8 +372,6 @@ namespace libtorrent {
 
 		// if this is an incoming connection, we're done here
 		if (!m_connecting) return;
-
-		if (m_connecting && t) t->inc_num_connecting(m_peer_info);
 
 #ifndef TORRENT_DISABLE_LOGGING
 		if (should_log(peer_log_alert::outgoing))
@@ -796,8 +796,6 @@ namespace libtorrent {
 
 //		INVARIANT_CHECK;
 		TORRENT_ASSERT(!m_in_constructor);
-		TORRENT_ASSERT(m_disconnecting);
-		TORRENT_ASSERT(m_disconnect_started);
 		TORRENT_ASSERT(!m_destructed);
 #if TORRENT_USE_ASSERTS
 		m_destructed = true;
@@ -835,7 +833,6 @@ namespace libtorrent {
 		TORRENT_ASSERT(t || !m_connecting);
 
 		// we should really have dealt with this already
-		TORRENT_ASSERT(!m_connecting);
 		if (m_connecting)
 		{
 			m_counters.inc_stats_counter(counters::num_peers_half_open, -1);
@@ -852,11 +849,6 @@ namespace libtorrent {
 #endif
 		TORRENT_ASSERT(m_request_queue.empty());
 		TORRENT_ASSERT(m_download_queue.empty());
-
-#if TORRENT_USE_ASSERTS
-		if (m_peer_info)
-			TORRENT_ASSERT(m_peer_info->connection == nullptr);
-#endif
 	}
 
 	bool peer_connection::on_parole() const
@@ -6324,10 +6316,6 @@ namespace libtorrent {
 			TORRENT_ASSERT(m_download_queue.empty());
 			TORRENT_ASSERT(m_request_queue.empty());
 			TORRENT_ASSERT(m_disconnect_started);
-		}
-		else if (!m_in_constructor)
-		{
-			TORRENT_ASSERT(m_ses.has_peer(this));
 		}
 
 		TORRENT_ASSERT(m_outstanding_bytes >= 0);

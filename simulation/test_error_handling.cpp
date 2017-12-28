@@ -105,7 +105,7 @@ void run_test(HandleAlerts const& on_alert, Test const& test)
 
 	// only monitor alerts for session 0 (the downloader)
 	print_alerts(*ses[0], [=](lt::session& ses, lt::alert const* a) {
-		if (auto ta = alert_cast<lt::torrent_added_alert>(a))
+		if (auto ta = alert_cast<lt::add_torrent_alert>(a))
 		{
 			ta->handle.connect_peer(lt::tcp::endpoint(peer1, 6881));
 		}
@@ -162,7 +162,7 @@ void operator delete(void* ptr) noexcept
 
 TORRENT_TEST(error_handling)
 {
-	for (int i = 0; i < 3000; ++i)
+	for (int i = 0; i < 4000; ++i)
 	{
 		// this will clear the history of all output we've printed so far.
 		// if we encounter an error from now on, we'll only print the relevant
@@ -176,7 +176,7 @@ TORRENT_TEST(error_handling)
 		std::printf("\n\n === ROUND %d ===\n\n", i);
 		try
 		{
-			g_alloc_counter = 100 + i;
+			g_alloc_counter = i;
 			using namespace lt;
 			run_test(
 				[](lt::session&, lt::alert const*) {},
@@ -211,5 +211,12 @@ TORRENT_TEST(error_handling)
 		// continue, we won't exercise any new code paths
 		if (g_alloc_counter > 0) break;
 	}
+
+	// if this fails, we need to raise the limit in the loop above
+	TEST_CHECK(g_alloc_counter > 0);
+
+	// we don't want any part of the actual test framework to suffer from failed
+	// allocations, so bump the counter
+	g_alloc_counter = 1000000;
 }
 
